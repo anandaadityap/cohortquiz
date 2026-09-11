@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TUTOR
+  STUDENT
+}
+
+enum QuestionStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String     @id
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role       @default(TUTOR)
+  createdAt    DateTime   @default(now())
+  materials    Material[]
+  tryouts      Tryout[]
+}
+
+model Material {
+  id        String     @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  questions Question[]
+  tryouts   Tryout[]
+}
+
+model Question {
+  id              String           @id @default(cuid())
+  materialId      String
+  material        Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  stem            String
+  options         Json
+  correctIndex    Int
+  explanation     String
+  status          QuestionStatus   @default(DRAFT)
+  source          String           @default("ai")
+  createdAt       DateTime         @default(now())
+  tryoutQuestions TryoutQuestion[]
+}
+
+model Tryout {
+  id              String           @id @default(cuid())
+  materialId      String
+  material        Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  title           String
+  token           String           @unique
+  durationMinutes Int              @default(15)
+  createdById     String
+  createdBy       User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+  questions       TryoutQuestion[]
+  attempts        Attempt[]
+}
+
+model TryoutQuestion {
+  tryoutId   String
+  questionId String
+  position   Int
+  tryout     Tryout   @relation(fields: [tryoutId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([tryoutId, questionId])
+}
+
+model Attempt {
+  id          String    @id @default(cuid())
+  tryoutId    String
+  tryout      Tryout    @relation(fields: [tryoutId], references: [id], onDelete: Cascade)
+  displayName String
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  answers     Json?
+  score       Int?
+  total       Int?
+  percentage  Int?
+  late        Boolean   @default(false)
+
+  @@index([tryoutId])
+}

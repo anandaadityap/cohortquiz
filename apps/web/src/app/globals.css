@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #f3eee4;
+  --ink: #12241f;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #e7d9c4 0%, transparent 55%),
+    radial-gradient(900px 420px at 110% 0%, #d7ebe3 0%, transparent 50%),
+    var(--bg);
+  color: var(--ink);
+}
+
+.paper-card {
+  @apply rounded-2xl border border-line bg-white/80 shadow-[0_10px_30px_rgba(18,36,31,0.06)];
+}
