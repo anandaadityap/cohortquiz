@@ -1,6 +1,6 @@
 # CohortQuiz case study
 
-English write-up for a tutoring / bimbel workspace demo. Useful as a portfolio piece and as Upwork proposal source material.
+English write-up for a tutoring / bimbel workspace demo. Useful as a portfolio piece and as Upwork proposal source material. Product screenshots live in [screenshots](./screenshots).
 
 ## Problem
 

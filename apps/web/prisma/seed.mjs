@@ -283,6 +283,29 @@ async function main() {
 
   await prisma.attemptAnswer.createMany({ data: andiAnswers });
 
+  await prisma.attempt.upsert({
+    where: { id: "attempt_demo_siti" },
+    update: {
+      tryoutId: tryout.id,
+      studentLabel: "Siti",
+      submittedAt: null,
+      scoreCorrect: null,
+      scoreTotal: null,
+      percent: null,
+      timedOut: false,
+    },
+    create: {
+      id: "attempt_demo_siti",
+      tryoutId: tryout.id,
+      studentLabel: "Siti",
+      submittedAt: null,
+      scoreCorrect: null,
+      scoreTotal: null,
+      percent: null,
+      timedOut: false,
+    },
+  });
+
   console.log("Seeded  demo@cohortquiz.dev / Demo123!");
   console.log(`Sample tryout: /t/${DEMO_TRYOUT_TOKEN}`);
 }

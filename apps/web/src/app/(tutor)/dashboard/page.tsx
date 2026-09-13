@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ShareControls } from "@/components/share-controls";
+import { attemptScoreLabel, tryoutHeadcountLabel } from "@/lib/attempts";
 import { tryoutShareUrl, tryoutStatusLabel, whatsappTryoutText } from "@/lib/share";
 
 export default async function DashboardPage() {
@@ -14,8 +15,7 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       include: {
         quiz: { include: { _count: { select: { questions: true } } } },
-        attempts: { where: { submittedAt: { not: null } }, orderBy: { submittedAt: "desc" }, take: 5 },
-        _count: { select: { attempts: true } },
+        attempts: { orderBy: { startedAt: "desc" } },
       },
     }),
     prisma.quiz.findMany({
@@ -115,13 +115,19 @@ function TryoutCard({
     durationSeconds: number;
     isActive: boolean;
     quiz: { title: string; _count: { questions: number } };
-    attempts: Array<{ id: string; studentLabel: string; percent: number | null }>;
-    _count: { attempts: number };
+    attempts: Array<{
+      id: string;
+      studentLabel: string;
+      percent: number | null;
+      submittedAt: Date | null;
+    }>;
   };
 }) {
   const minutes = tryout.durationSeconds / 60;
   const share = tryout.token ? tryoutShareUrl(tryout.token) : null;
-  const submitted = tryout.attempts;
+  const submitted = tryout.attempts.filter((row) => row.submittedAt);
+  const inProgressCount = tryout.attempts.filter((row) => !row.submittedAt).length;
+  const preview = tryout.attempts.slice(0, 8);
   const mean =
     submitted.length === 0
       ? null
@@ -146,7 +152,8 @@ function TryoutCard({
             </Link>
           </h3>
           <p className="mt-1 text-sm text-ink/60">
-            {tryout.quiz._count.questions} questions · {minutes} minutes · {tryout._count.attempts} attempts
+            {tryout.quiz._count.questions} questions · {minutes} minutes ·{" "}
+            {tryoutHeadcountLabel(submitted.length, inProgressCount)}
             {mean === null ? "" : ` · mean ${mean.toFixed(0)}%`}
           </p>
         </div>
@@ -155,16 +162,16 @@ function TryoutCard({
         </Link>
       </div>
       {share ? <ShareControls url={share} whatsappText={whatsapp} /> : null}
-      {submitted.length > 0 ? (
+      {preview.length > 0 ? (
         <ul className="space-y-1 text-sm text-ink/75">
-          {submitted.map((row) => (
+          {preview.map((row) => (
             <li key={row.id}>
-              {row.studentLabel}: {row.percent?.toFixed(0)}%
+              {row.studentLabel}: {attemptScoreLabel(row)}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-ink/60">No scores yet.</p>
+        <p className="text-sm text-ink/60">No students yet.</p>
       )}
     </article>
   );

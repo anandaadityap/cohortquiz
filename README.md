@@ -1,8 +1,30 @@
 # CohortQuiz
 
-Tutoring / bimbel workspace: paste learning materials, let AI draft multiple-choice items grounded in that text, review them, share a timed CBT tryout link, and read cohort scores.
+Paste this week’s notes. Review the questions. Time the tryout.
 
-This is a tutoring workspace — not a full LMS, not a CPNS consumer app, and not a billing product.
+A tutoring / bimbel workspace: AI drafts multiple-choice items from *your* material, you review them, then you share a timed CBT link and read cohort scores the same evening.
+
+This is not a full LMS, not a CPNS consumer app, and not a billing product.
+
+[Case study](docs/CASE_STUDY.md)
+
+![Landing — paste notes, review questions, time the tryout](docs/screenshots/landing.png)
+
+![Tutor workspace with live tryouts, student links, and score vs in-progress counts](docs/screenshots/workspace.png)
+
+![Tryout roster: submitted scores and in-progress students on one page](docs/screenshots/tryout.png)
+
+## Try it
+
+| | |
+| --- | --- |
+| **App** | [http://localhost:3000](http://localhost:3000) after the happy path below |
+| **Tutor** | `demo@cohortquiz.dev` / `Demo123!` (documented here only; the login form is empty) |
+| **Sample tryout** | [/t/cq-demo-photosynthesis](http://localhost:3000/t/cq-demo-photosynthesis) |
+
+Five-minute loop: sign in → **Workspace** → open the photosynthesis tryout (link stays visible) → or **Create tryout**, paste notes, review, share. Students enter a name at `/t/[token]`. Scores and per-question % land on `/tryouts/[id]`.
+
+Question edits stay open until the first student **starts**. Publishing a tryout marks the quiz approved. Materials and quiz preview stay as a secondary library.
 
 ## Happy path (local)
 
@@ -16,9 +38,6 @@ docker compose up --build
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-- Tutor: `demo@cohortquiz.dev` / `Demo123!` (documented here only; the login form is empty)
-- Sample tryout: [http://localhost:3000/t/cq-demo-photosynthesis](http://localhost:3000/t/cq-demo-photosynthesis)
 
 The web container runs Prisma migrations and seed on boot. The Go API (Fiber v2) serves `GET /healthz`, `POST /api/v1/generate-quiz`, and `POST /api/v1/grade-attempt`. Leave `OPENAI_API_KEY` empty to use the mock generator.
 
@@ -50,8 +69,6 @@ Then:
 3. Click **Create tryout**, paste notes, review questions, then share a timed link.
 4. Students open `/t/[token]`, enter a name, and sit the timed CBT.
 5. Scores and per-question % land on `/tryouts/[id]` (CSV export on that page).
-
-Materials and quiz preview remain as a secondary library. Publishing a tryout marks the quiz approved. Question edits stay open until the first student **starts**.
 
 ## Architecture
 
@@ -91,6 +108,7 @@ Postgres ◄── Prisma (schema owner)
 | `apps/web` | Next.js App Router, Tailwind, Auth.js credentials, Prisma |
 | `services/api-go` | Fiber REST: health, generate, grade |
 | `docs/CASE_STUDY.md` | Product narrative and Upwork-oriented bullets |
+| `docs/screenshots/` | Landing, workspace, and tryout roster |
 
 Tutor sitemap: `/dashboard` (workspace), `/tryouts/new`, `/tryouts/[id]`, `/materials`, `/quizzes`. Student: `/t/[token]`.
 

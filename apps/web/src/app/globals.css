@@ -24,3 +24,12 @@ body {
 .paper-card {
   @apply rounded-2xl border border-line bg-white/80 shadow-[0_10px_30px_rgba(18,36,31,0.06)];
 }
+
+.nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
