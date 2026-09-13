@@ -6,7 +6,7 @@ A tutoring / bimbel workspace: AI drafts multiple-choice items from *your* mater
 
 This is not a full LMS, not a CPNS consumer app, and not a billing product.
 
-[Case study](docs/CASE_STUDY.md)
+[Live demo](https://cohortquiz.supernand.tech/) · [Case study](docs/CASE_STUDY.md)
 
 ![Landing — paste notes, review questions, time the tryout](docs/screenshots/landing.png)
 
@@ -16,13 +16,22 @@ This is not a full LMS, not a CPNS consumer app, and not a billing product.
 
 ## Try it
 
+### Live (deployed)
+
+| | |
+| --- | --- |
+| **App** | [https://cohortquiz.supernand.tech](https://cohortquiz.supernand.tech/) |
+| **Tutor** | `demo@cohortquiz.dev` / `Demo123!` (documented here only; the login form is empty) |
+| **Sample tryout** | [Photosynthesis MCQ](https://cohortquiz.supernand.tech/t/cq-demo-photosynthesis) |
+
+Five-minute loop: open the live app → sign in → **Workspace** → open the photosynthesis tryout (link stays visible) → or **Create tryout**, paste notes, review, share. Students enter a name at `/t/[token]`. Scores and per-question % land on `/tryouts/[id]`.
+
+### Local
+
 | | |
 | --- | --- |
 | **App** | [http://localhost:3000](http://localhost:3000) after the happy path below |
-| **Tutor** | `demo@cohortquiz.dev` / `Demo123!` (documented here only; the login form is empty) |
 | **Sample tryout** | [/t/cq-demo-photosynthesis](http://localhost:3000/t/cq-demo-photosynthesis) |
-
-Five-minute loop: sign in → **Workspace** → open the photosynthesis tryout (link stays visible) → or **Create tryout**, paste notes, review, share. Students enter a name at `/t/[token]`. Scores and per-question % land on `/tryouts/[id]`.
 
 Question edits stay open until the first student **starts**. Publishing a tryout marks the quiz approved. Materials and quiz preview stay as a secondary library.
 
