@@ -16,6 +16,14 @@ export const metadata: Metadata = {
   title: "CohortQuiz — tutoring tryouts",
   description:
     "Paste this week’s notes, review AI-drafted questions, then share a timed tryout link with your cohort.",
+  metadataBase: new URL(process.env.AUTH_URL ?? "https://cohortquiz.supernand.tech"),
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
