@@ -20,10 +20,10 @@ export function LoginForm() {
     });
     setPending(false);
     if (result?.error) {
-      setError("Email or password did not match the demo tutor account.");
+      setError("Email or password did not match.");
       return;
     }
-    router.push(params.get("callbackUrl") || "/app");
+    router.push(params.get("callbackUrl") || "/dashboard");
     router.refresh();
   }
 
@@ -38,7 +38,7 @@ export function LoginForm() {
           name="email"
           type="email"
           required
-          defaultValue="tutor@cohortquiz.demo"
+          autoComplete="username"
           className="mt-1 w-full rounded-xl border border-line bg-white px-3 py-2 outline-none ring-moss/30 focus:ring-2"
         />
       </div>
@@ -51,7 +51,7 @@ export function LoginForm() {
           name="password"
           type="password"
           required
-          defaultValue="demo1234"
+          autoComplete="current-password"
           className="mt-1 w-full rounded-xl border border-line bg-white px-3 py-2 outline-none ring-moss/30 focus:ring-2"
         />
       </div>
@@ -63,9 +63,6 @@ export function LoginForm() {
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>
-      <p className="text-xs leading-relaxed text-ink/60">
-        Seeded demo: <code>tutor@cohortquiz.demo</code> / <code>demo1234</code>
-      </p>
     </form>
   );
 }

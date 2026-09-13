@@ -15,7 +15,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "CohortQuiz — tutoring tryouts",
   description:
-    "Paste learning materials, draft grounded MCQs, approve them, then run a timed CBT tryout for your cohort.",
+    "Paste this week’s notes, review AI-drafted questions, then share a timed tryout link with your cohort.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

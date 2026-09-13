@@ -1,64 +1,100 @@
 package grade
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"time"
+)
+
+const GraceSeconds = 30
+
+var ErrTimedOut = errors.New("time limit exceeded")
 
 type Request struct {
-	Items []Item `json:"items"`
+	QuizID           string    `json:"quiz_id"`
+	Answers          []Answer  `json:"answers"`
+	StartedAt        time.Time `json:"started_at"`
+	SubmittedAt      time.Time `json:"submitted_at"`
+	TimeLimitSeconds int       `json:"time_limit_seconds"`
 }
 
-type Item struct {
-	QuestionID    string `json:"questionId"`
-	SelectedIndex *int   `json:"selectedIndex"`
-	CorrectIndex  int    `json:"correctIndex"`
+type Answer struct {
+	QuestionID    string `json:"question_id"`
+	SelectedIndex *int   `json:"selected_index"`
 }
 
 type ItemResult struct {
-	QuestionID    string `json:"questionId"`
-	SelectedIndex *int   `json:"selectedIndex"`
-	CorrectIndex  int    `json:"correctIndex"`
+	QuestionID    string `json:"question_id"`
 	Correct       bool   `json:"correct"`
+	CorrectIndex  int    `json:"correct_index"`
+	SelectedIndex *int   `json:"selected_index"`
 }
 
 type Result struct {
-	Correct    int          `json:"correct"`
-	Total      int          `json:"total"`
-	Score      int          `json:"score"`
-	Percentage int          `json:"percentage"`
-	Items      []ItemResult `json:"items"`
+	ScoreCorrect int          `json:"score_correct"`
+	ScoreTotal   int          `json:"score_total"`
+	Percent      float64      `json:"percent"`
+	TimedOut     bool         `json:"timed_out"`
+	PerItem      []ItemResult `json:"per_item"`
 }
 
-func Attempt(req Request) (Result, error) {
-	if len(req.Items) == 0 {
-		return Result{}, fmt.Errorf("items must not be empty")
+func Attempt(req Request, keys map[string]int) (Result, error) {
+	if req.QuizID == "" {
+		return Result{}, fmt.Errorf("quiz_id is required")
+	}
+	if len(keys) == 0 {
+		return Result{}, fmt.Errorf("quiz has no questions")
+	}
+	if req.TimeLimitSeconds <= 0 {
+		return Result{}, fmt.Errorf("time_limit_seconds must be > 0")
+	}
+	if req.StartedAt.IsZero() || req.SubmittedAt.IsZero() {
+		return Result{}, fmt.Errorf("started_at and submitted_at are required")
 	}
 
+	selected := map[string]*int{}
+	for _, a := range req.Answers {
+		if a.QuestionID == "" {
+			return Result{}, fmt.Errorf("question_id is required")
+		}
+		selected[a.QuestionID] = a.SelectedIndex
+	}
+
+	elapsed := req.SubmittedAt.Sub(req.StartedAt)
+	limit := time.Duration(req.TimeLimitSeconds) * time.Second
+	grace := time.Duration(GraceSeconds) * time.Second
+	timedOut := elapsed > limit
+	if elapsed > limit+grace {
+		out := score(keys, selected)
+		out.TimedOut = true
+		return out, ErrTimedOut
+	}
+
+	out := score(keys, selected)
+	out.TimedOut = timedOut
+	return out, nil
+}
+
+func score(keys map[string]int, selected map[string]*int) Result {
 	out := Result{
-		Total: len(req.Items),
-		Items: make([]ItemResult, 0, len(req.Items)),
+		ScoreTotal: len(keys),
+		PerItem:    make([]ItemResult, 0, len(keys)),
 	}
-
-	for _, item := range req.Items {
-		if item.QuestionID == "" {
-			return Result{}, fmt.Errorf("questionId is required")
-		}
-		if item.CorrectIndex < 0 {
-			return Result{}, fmt.Errorf("correctIndex must be >= 0")
-		}
-		ok := item.SelectedIndex != nil && *item.SelectedIndex == item.CorrectIndex
+	for questionID, correctIndex := range keys {
+		choice := selected[questionID]
+		ok := choice != nil && *choice == correctIndex
 		if ok {
-			out.Correct++
+			out.ScoreCorrect++
 		}
-		out.Items = append(out.Items, ItemResult{
-			QuestionID:    item.QuestionID,
-			SelectedIndex: item.SelectedIndex,
-			CorrectIndex:  item.CorrectIndex,
+		out.PerItem = append(out.PerItem, ItemResult{
+			QuestionID:    questionID,
 			Correct:       ok,
+			CorrectIndex:  correctIndex,
+			SelectedIndex: choice,
 		})
 	}
-
-	out.Score = out.Correct
-	if out.Total > 0 {
-		out.Percentage = (out.Correct * 100) / out.Total
+	if out.ScoreTotal > 0 {
+		out.Percent = float64(out.ScoreCorrect) * 100.0 / float64(out.ScoreTotal)
 	}
-	return out, nil
+	return out
 }

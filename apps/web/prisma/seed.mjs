@@ -1,7 +1,14 @@
+import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+export const DEMO_TRYOUT_TOKEN = "cq-demo-photosynthesis";
+
+function hashToken(raw) {
+  return createHash("sha256").update(raw).digest("hex");
+}
 
 const MATERIAL = `Photosynthesis converts light energy into chemical energy that plants can store and later use.
 
@@ -15,113 +22,210 @@ Several environmental factors limit the rate of photosynthesis: light intensity,
 
 Tutors should treat this note as source material only. Quiz items generated from it must stay faithful to these facts and must be approved before they appear on a timed tryout.`;
 
-const options = (list) => list;
+const QUESTIONS = [
+  {
+    id: "question_1",
+    position: 0,
+    stem: "According to the material, chlorophyll absorbs mainly which wavelengths of light?",
+    options: ["Blue and red", "Green and yellow", "Only ultraviolet", "Infrared only"],
+    correctIndex: 0,
+    explanation: "Chlorophyll absorbs mainly blue and red wavelengths; green light is largely reflected.",
+    sourceExcerpt: "Chlorophyll pigments in the thylakoid membranes of chloroplasts absorb mainly blue and red wavelengths of light.",
+    difficulty: "easy",
+    bloomTag: "remember",
+  },
+  {
+    id: "question_2",
+    position: 1,
+    stem: "Where do the light-dependent reactions take place?",
+    options: ["In the stroma", "In the thylakoid membrane", "In the nucleus", "In the mitochondrion"],
+    correctIndex: 1,
+    explanation: "The material locates the light-dependent reactions in the thylakoid membrane.",
+    sourceExcerpt: "The light-dependent reactions occur in the thylakoid membrane.",
+    difficulty: "easy",
+    bloomTag: "remember",
+  },
+  {
+    id: "question_3",
+    position: 2,
+    stem: "Photolysis of water during the light-dependent reactions releases which byproduct?",
+    options: ["Nitrogen", "Methane", "Oxygen", "Glucose"],
+    correctIndex: 2,
+    explanation: "Water is split (photolysis), releasing oxygen as a byproduct.",
+    sourceExcerpt: "Water molecules are split (photolysis), releasing oxygen as a byproduct.",
+    difficulty: "easy",
+    bloomTag: "understand",
+  },
+  {
+    id: "question_4",
+    position: 3,
+    stem: "Which pair of products from the light-dependent reactions powers the Calvin cycle?",
+    options: ["ATP and NADPH", "Oxygen and starch", "DNA and RNA", "Sodium and potassium"],
+    correctIndex: 0,
+    explanation: "ATP and NADPH carry energy and reducing power to the Calvin cycle.",
+    sourceExcerpt: "The same stage produces ATP and NADPH, which carry energy and reducing power to the next stage.",
+    difficulty: "medium",
+    bloomTag: "understand",
+  },
+  {
+    id: "question_5",
+    position: 4,
+    stem: "Carbon fixation in the Calvin cycle is catalyzed primarily by which enzyme named in the notes?",
+    options: ["Amylase", "Helicase", "Pepsin", "Rubisco"],
+    correctIndex: 3,
+    explanation: "Rubisco fixes carbon dioxide onto ribulose bisphosphate in the stroma.",
+    sourceExcerpt: "Rubisco fixes carbon dioxide onto ribulose bisphosphate.",
+    difficulty: "medium",
+    bloomTag: "remember",
+  },
+  {
+    id: "question_6",
+    position: 5,
+    stem: "Where does the Calvin cycle take place?",
+    options: ["Thylakoid lumen", "Stroma", "Cytoplasm of animal cells", "Cell wall"],
+    correctIndex: 1,
+    explanation: "The Calvin cycle (light-independent reactions) takes place in the stroma.",
+    sourceExcerpt: "The Calvin cycle (light-independent reactions) takes place in the stroma.",
+    difficulty: "easy",
+    bloomTag: "remember",
+  },
+  {
+    id: "question_7",
+    position: 6,
+    stem: "Which environmental factor most directly limits carbon fixation according to the material?",
+    options: ["Carbon dioxide concentration", "Soil color", "Moon phase", "Loud classroom noise"],
+    correctIndex: 0,
+    explanation: "The notes list CO2 concentration as a limiter and map it to carbon fixation.",
+    sourceExcerpt: "carbon dioxide concentration, and temperature. In a bimbel tryout, students should be able to map a factor to the stage it most directly affects — for example, light intensity on the light-dependent reactions, and CO2 concentration on carbon fixation.",
+    difficulty: "medium",
+    bloomTag: "apply",
+  },
+  {
+    id: "question_8",
+    position: 7,
+    stem: "Light intensity most directly affects which stage named in the notes?",
+    options: ["Carbon fixation only", "The light-dependent reactions", "DNA replication", "Protein folding in the nucleus"],
+    correctIndex: 1,
+    explanation: "The notes map light intensity onto the light-dependent reactions.",
+    sourceExcerpt: "light intensity on the light-dependent reactions, and CO2 concentration on carbon fixation.",
+    difficulty: "medium",
+    bloomTag: "apply",
+  },
+  {
+    id: "question_9",
+    position: 8,
+    stem: "Why do healthy leaves appear green, according to the material?",
+    options: [
+      "They emit green light from ATP",
+      "Green light is largely reflected",
+      "Rubisco is green",
+      "Stroma stores green pigment only",
+    ],
+    correctIndex: 1,
+    explanation: "Green light is largely reflected, which is why healthy leaves appear green.",
+    sourceExcerpt: "Green light is largely reflected, which is why healthy leaves appear green.",
+    difficulty: "easy",
+    bloomTag: "understand",
+  },
+  {
+    id: "question_10",
+    position: 9,
+    stem: "Triose phosphate produced by the Calvin cycle can be used to do which of the following?",
+    options: [
+      "Split water in the thylakoid",
+      "Build glucose and regenerate the CO2 acceptor",
+      "Absorb ultraviolet light only",
+      "Replace chlorophyll with starch",
+    ],
+    correctIndex: 1,
+    explanation: "Triose phosphate can be used to build glucose and regenerate the CO2 acceptor.",
+    sourceExcerpt:
+      "the cycle produces triose phosphate that can be used to build glucose and regenerate the CO2 acceptor.",
+    difficulty: "hard",
+    bloomTag: "analyze",
+  },
+];
 
 async function main() {
-  const passwordHash = await bcrypt.hash("demo1234", 10);
+  const passwordHash = await bcrypt.hash("Demo123!", 10);
 
   const tutor = await prisma.user.upsert({
-    where: { email: "tutor@cohortquiz.demo" },
-    update: { passwordHash, name: "Dewi Tutor", role: "TUTOR" },
+    where: { email: "demo@cohortquiz.dev" },
+    update: { passwordHash, name: "Dewi Tutor" },
     create: {
       id: "user_tutor_demo",
-      email: "tutor@cohortquiz.demo",
+      email: "demo@cohortquiz.dev",
       passwordHash,
       name: "Dewi Tutor",
-      role: "TUTOR",
     },
   });
 
   const material = await prisma.material.upsert({
     where: { id: "material_photosynthesis" },
-    update: { title: "Photosynthesis for SMA IPA", content: MATERIAL, authorId: tutor.id },
+    update: {
+      title: "Intro to Photosynthesis",
+      subject: "SMA IPA",
+      bodyText: MATERIAL,
+      userId: tutor.id,
+      archivedAt: null,
+    },
     create: {
       id: "material_photosynthesis",
-      title: "Photosynthesis for SMA IPA",
-      content: MATERIAL,
-      authorId: tutor.id,
+      title: "Intro to Photosynthesis",
+      subject: "SMA IPA",
+      bodyText: MATERIAL,
+      userId: tutor.id,
     },
   });
 
-  const questions = [
-    {
-      id: "question_approved_1",
-      status: "APPROVED",
-      stem: "According to the material, chlorophyll absorbs mainly which wavelengths of light?",
-      options: options(["Blue and red", "Green and yellow", "Only ultraviolet", "Infrared only"]),
-      correctIndex: 0,
-      explanation:
-        "The notes state that chlorophyll absorbs mainly blue and red wavelengths; green light is largely reflected.",
+  const quiz = await prisma.quiz.upsert({
+    where: { id: "quiz_photosynthesis" },
+    update: {
+      userId: tutor.id,
+      materialId: material.id,
+      title: "Photosynthesis MCQ tryout",
+      status: "approved",
+      itemCount: QUESTIONS.length,
+      model: "seed",
+      promptVersion: "v1",
     },
-    {
-      id: "question_approved_2",
-      status: "APPROVED",
-      stem: "Where do the light-dependent reactions take place?",
-      options: options(["In the stroma", "In the thylakoid membrane", "In the nucleus", "In the mitochondrion"]),
-      correctIndex: 1,
-      explanation: "The material locates the light-dependent reactions in the thylakoid membrane.",
+    create: {
+      id: "quiz_photosynthesis",
+      userId: tutor.id,
+      materialId: material.id,
+      title: "Photosynthesis MCQ tryout",
+      status: "approved",
+      itemCount: QUESTIONS.length,
+      model: "seed",
+      promptVersion: "v1",
     },
-    {
-      id: "question_approved_3",
-      status: "APPROVED",
-      stem: "Photolysis of water during the light-dependent reactions releases which byproduct?",
-      options: options(["Nitrogen", "Methane", "Oxygen", "Glucose"]),
-      correctIndex: 2,
-      explanation: "Water is split (photolysis), releasing oxygen as a byproduct.",
-    },
-    {
-      id: "question_approved_4",
-      status: "APPROVED",
-      stem: "Which pair of products from the light-dependent reactions powers the Calvin cycle?",
-      options: options(["ATP and NADPH", "Oxygen and starch", "DNA and RNA", "Sodium and potassium"]),
-      correctIndex: 0,
-      explanation: "ATP and NADPH carry energy and reducing power to the Calvin cycle.",
-    },
-    {
-      id: "question_approved_5",
-      status: "APPROVED",
-      stem: "Carbon fixation in the Calvin cycle is catalyzed primarily by which enzyme named in the notes?",
-      options: options(["Amylase", "Helicase", "Pepsin", "Rubisco"]),
-      correctIndex: 3,
-      explanation: "Rubisco fixes carbon dioxide onto ribulose bisphosphate in the stroma.",
-    },
-    {
-      id: "question_draft_1",
-      status: "DRAFT",
-      stem: "Which environmental factor most directly limits carbon fixation according to the material?",
-      options: options([
-        "Carbon dioxide concentration",
-        "Soil color",
-        "Moon phase",
-        "Loud classroom noise",
-      ]),
-      correctIndex: 0,
-      explanation:
-        "The notes list CO2 concentration as a limiter and map it to carbon fixation. This item is still a draft until a tutor approves it.",
-    },
-  ];
+  });
 
-  for (const q of questions) {
+  for (const q of QUESTIONS) {
     await prisma.question.upsert({
       where: { id: q.id },
       update: {
-        materialId: material.id,
+        quizId: quiz.id,
+        position: q.position,
         stem: q.stem,
         options: q.options,
         correctIndex: q.correctIndex,
         explanation: q.explanation,
-        status: q.status,
-        source: "seed",
+        sourceExcerpt: q.sourceExcerpt,
+        difficulty: q.difficulty,
+        bloomTag: q.bloomTag,
       },
       create: {
         id: q.id,
-        materialId: material.id,
+        quizId: quiz.id,
+        position: q.position,
         stem: q.stem,
         options: q.options,
         correctIndex: q.correctIndex,
         explanation: q.explanation,
-        status: q.status,
-        source: "seed",
+        sourceExcerpt: q.sourceExcerpt,
+        difficulty: q.difficulty,
+        bloomTag: q.bloomTag,
       },
     });
   }
@@ -129,71 +233,58 @@ async function main() {
   const tryout = await prisma.tryout.upsert({
     where: { id: "tryout_demo" },
     update: {
-      materialId: material.id,
-      title: "SMA IPA — Photosynthesis mini tryout",
-      token: "demo-tryout",
-      durationMinutes: 12,
-      createdById: tutor.id,
+      quizId: quiz.id,
+      token: DEMO_TRYOUT_TOKEN,
+      tokenHash: hashToken(DEMO_TRYOUT_TOKEN),
+      durationSeconds: 15 * 60,
+      isActive: true,
     },
     create: {
       id: "tryout_demo",
-      materialId: material.id,
-      title: "SMA IPA — Photosynthesis mini tryout",
-      token: "demo-tryout",
-      durationMinutes: 12,
-      createdById: tutor.id,
+      quizId: quiz.id,
+      token: DEMO_TRYOUT_TOKEN,
+      tokenHash: hashToken(DEMO_TRYOUT_TOKEN),
+      durationSeconds: 15 * 60,
+      isActive: true,
     },
   });
 
-  await prisma.tryoutQuestion.deleteMany({ where: { tryoutId: tryout.id } });
-  const approved = questions.filter((q) => q.status === "APPROVED");
-  await prisma.tryoutQuestion.createMany({
-    data: approved.map((q, index) => ({
-      tryoutId: tryout.id,
-      questionId: q.id,
-      position: index,
-    })),
-  });
-
+  await prisma.attemptAnswer.deleteMany({ where: { attemptId: "attempt_demo_andi" } });
   await prisma.attempt.upsert({
-    where: { id: "attempt_demo_rina" },
+    where: { id: "attempt_demo_andi" },
     update: {
       tryoutId: tryout.id,
-      displayName: "Rina",
+      studentLabel: "Andi",
       submittedAt: new Date(),
-      answers: {
-        question_approved_1: 0,
-        question_approved_2: 1,
-        question_approved_3: 2,
-        question_approved_4: 1,
-        question_approved_5: 3,
-      },
-      score: 4,
-      total: 5,
-      percentage: 80,
-      late: false,
+      scoreCorrect: 9,
+      scoreTotal: 10,
+      percent: 90,
+      timedOut: false,
     },
     create: {
-      id: "attempt_demo_rina",
+      id: "attempt_demo_andi",
       tryoutId: tryout.id,
-      displayName: "Rina",
+      studentLabel: "Andi",
       submittedAt: new Date(),
-      answers: {
-        question_approved_1: 0,
-        question_approved_2: 1,
-        question_approved_3: 2,
-        question_approved_4: 1,
-        question_approved_5: 3,
-      },
-      score: 4,
-      total: 5,
-      percentage: 80,
-      late: false,
+      scoreCorrect: 9,
+      scoreTotal: 10,
+      percent: 90,
+      timedOut: false,
     },
   });
 
-  console.log("Seeded tutor@cohortquiz.demo / demo1234");
-  console.log("Sample tryout token: demo-tryout");
+  const andiAnswers = QUESTIONS.map((q, i) => ({
+    id: `answer_andi_${i + 1}`,
+    attemptId: "attempt_demo_andi",
+    questionId: q.id,
+    selectedIndex: i === 3 ? 1 : q.correctIndex,
+    isCorrect: i !== 3,
+  }));
+
+  await prisma.attemptAnswer.createMany({ data: andiAnswers });
+
+  console.log("Seeded  demo@cohortquiz.dev / Demo123!");
+  console.log(`Sample tryout: /t/${DEMO_TRYOUT_TOKEN}`);
 }
 
 main()

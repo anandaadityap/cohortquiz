@@ -1,8 +1,8 @@
 # CohortQuiz
 
-Tutoring / bimbel workspace: paste learning materials, let AI draft multiple-choice items grounded in that text, **approve them**, share a timed CBT tryout link, and read cohort scores.
+Tutoring / bimbel workspace: paste learning materials, let AI draft multiple-choice items grounded in that text, review them, share a timed CBT tryout link, and read cohort scores.
 
-This is a demo product — not a full LMS, not a CPNS consumer app, and not a billing product.
+This is a tutoring workspace — not a full LMS, not a CPNS consumer app, and not a billing product.
 
 ## Happy path (local)
 
@@ -17,17 +17,17 @@ docker compose up --build
 
 Open [http://localhost:3000](http://localhost:3000).
 
-- Tutor: `tutor@cohortquiz.demo` / `demo1234`
-- Sample tryout: [http://localhost:3000/tryout/demo-tryout](http://localhost:3000/tryout/demo-tryout)
+- Tutor: `demo@cohortquiz.dev` / `Demo123!` (documented here only; the login form is empty)
+- Sample tryout: [http://localhost:3000/t/cq-demo-photosynthesis](http://localhost:3000/t/cq-demo-photosynthesis)
 
-The web container runs Prisma migrations and seed on boot. The Go API serves `GET /healthz`, `POST /v1/generate-quiz`, and `POST /v1/grade-attempt`. Leave `OPENAI_API_KEY` empty to use the mock generator.
+The web container runs Prisma migrations and seed on boot. The Go API (Fiber v2) serves `GET /healthz`, `POST /api/v1/generate-quiz`, and `POST /api/v1/grade-attempt`. Leave `OPENAI_API_KEY` empty to use the mock generator.
 
 ### Option B — three processes
 
 ```bash
-# 1. Postgres (example)
-# createdb cohortquiz && createuser cohortquiz ...
 export DATABASE_URL=postgresql://cohortquiz:cohortquiz@localhost:5432/cohortquiz?schema=public
+export INTERNAL_API_KEY=dev-internal-key-change-me
+export CORS_ORIGIN=http://localhost:3000
 
 # 2. Go API
 cd services/api-go
@@ -45,39 +45,58 @@ npm run dev
 
 Then:
 
-1. Sign in as the seeded tutor.
-2. Open **Photosynthesis for SMA IPA**.
-3. Review drafts — approve before publishing (a sample tryout is already published from five approved items; one extra question stays in `DRAFT` on purpose).
-4. Click **Draft with Go generator** to add more unpublished items (Next.js → HTTP → Go).
-5. Open the student link, sit the timed CBT, submit. Grading is `POST /v1/grade-attempt` on the Go service.
-6. Back in the tutor workspace, open the tryout to see cohort scores.
+1. Sign in as the seeded tutor (or register at `/register`).
+2. Open **Workspace**. The seeded photosynthesis tryout is live; the student link stays visible.
+3. Click **Create tryout**, paste notes, review questions, then share a timed link.
+4. Students open `/t/[token]`, enter a name, and sit the timed CBT.
+5. Scores and per-question % land on `/tryouts/[id]` (CSV export on that page).
+
+Materials and quiz preview remain as a secondary library. Publishing a tryout marks the quiz approved. Question edits stay open until the first student **starts**.
 
 ## Architecture
 
 ```
 browser  →  Next.js (Auth.js, Prisma, UI)
-                │  HTTP
+                │  HTTP + X-Internal-Key
                 ▼
-            Go API  →  OpenAI (optional) or mock generator
+            Go Fiber API  →  OpenAI (optional) or mock generator
                 │
-Postgres ◄── Prisma (owned by the web app)
+Postgres ◄── Prisma (schema owner)
+     ▲
+     └── Go reads question answer keys for grading
 ```
 
 - LLM calls happen only in `services/api-go`. The browser never sees the API key.
 - If `OPENAI_API_KEY` is unset, Go returns deterministic, material-grounded mock items.
-- Tryouts copy **approved** questions only. Drafts cannot be published.
+- If the key **is** set and the model fails, Go retries once and then returns 502/504 — it does not silently swap in mock items.
+- Tryouts attach to an **approved** quiz. Sharing a tryout sets `approved`. Draft quizzes cannot be opened by students.
+- Question content locks when the **first student starts**, not merely when the quiz is approved.
+- The student URL is stored (raw token + hash) so tutors can copy it again. Hash is still used for lookup.
+- Framework note: PRD OD4 defaulted to chi; this repo uses **Fiber v2**. HTTP contracts still match PRD §7.3 (`/api/v1`, snake_case JSON).
+
+## Go contracts
+
+| Method | Path | Auth |
+| --- | --- | --- |
+| GET | `/healthz` and `/api/v1/healthz` | public |
+| POST | `/api/v1/generate-quiz` | `X-Internal-Key` + rate limit |
+| POST | `/api/v1/grade-attempt` | `X-Internal-Key` |
+
+`GET /healthz` → `{ "status": "ok", "service": "cohortquiz-api", "time": "<RFC3339>" }`
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
 | `apps/web` | Next.js App Router, Tailwind, Auth.js credentials, Prisma |
-| `services/api-go` | REST: health, generate, grade |
+| `services/api-go` | Fiber REST: health, generate, grade |
 | `docs/CASE_STUDY.md` | Product narrative and Upwork-oriented bullets |
+
+Tutor sitemap: `/dashboard` (workspace), `/tryouts/new`, `/tryouts/[id]`, `/materials`, `/quizzes`. Student: `/t/[token]`.
 
 ## Environment
 
-See `.env.example`. The Next.js app reads `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, and `API_GO_URL`. The Go process reads `PORT`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
+See `.env.example`. Next reads `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `API_GO_URL`, and `INTERNAL_API_KEY`. Go reads `PORT`, `DATABASE_URL`, `INTERNAL_API_KEY`, `CORS_ORIGIN`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
 
 ## Out of scope
 

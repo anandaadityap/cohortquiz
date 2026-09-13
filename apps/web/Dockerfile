@@ -13,6 +13,7 @@ ENV DATABASE_URL="postgresql://cohortquiz:cohortquiz@localhost:5432/cohortquiz?s
 ENV AUTH_SECRET="build-time-placeholder-secret-not-for-runtime"
 ENV AUTH_URL="http://localhost:3000"
 ENV API_GO_URL="http://api:8080"
+ENV INTERNAL_API_KEY="build-time-placeholder-key"
 RUN npm run build
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm start"]

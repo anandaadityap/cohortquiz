@@ -8,11 +8,17 @@ export default function LoginPage() {
       <Link href="/" className="mb-8 text-center font-serif text-2xl">
         CohortQuiz
       </Link>
-      <h1 className="mb-2 text-center font-serif text-3xl">Tutor workspace</h1>
-      <p className="mb-8 text-center text-ink/70">Sign in to review drafts and publish tryouts.</p>
+      <h1 className="mb-2 text-center font-serif text-3xl">Sign in</h1>
+      <p className="mb-8 text-center text-ink/70">Open your workspace to create this week’s tryout.</p>
       <Suspense>
         <LoginForm />
       </Suspense>
+      <p className="mt-6 text-center text-sm text-ink/60">
+        New tutor?{" "}
+        <Link className="underline" href="/register">
+          Create an account
+        </Link>
+      </p>
     </main>
   );
 }

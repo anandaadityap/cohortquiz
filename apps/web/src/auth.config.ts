@@ -1,5 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 
+const protectedPrefixes = ["/dashboard", "/materials", "/quizzes", "/tryouts"];
+
+function isProtected(pathname: string) {
+  return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export const authConfig = {
   trustHost: true,
   pages: { signIn: "/login" },
@@ -9,20 +15,17 @@ export const authConfig = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) ?? "TUTOR";
       }
       return session;
     },
     authorized({ auth, request }) {
-      const isApp = request.nextUrl.pathname.startsWith("/app");
-      if (isApp) return !!auth?.user;
+      if (isProtected(request.nextUrl.pathname)) return !!auth?.user;
       return true;
     },
   },

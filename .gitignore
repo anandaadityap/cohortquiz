@@ -18,3 +18,4 @@ services/api-go/api-go
 services/api-go/bin/
 .prisma/
 postgres-data/
+misc/

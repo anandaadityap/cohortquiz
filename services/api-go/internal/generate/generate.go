@@ -10,21 +10,33 @@ import (
 )
 
 type Question struct {
-	Stem         string   `json:"stem"`
-	Options      []string `json:"options"`
-	CorrectIndex int      `json:"correctIndex"`
-	Explanation  string   `json:"explanation"`
+	Stem          string   `json:"stem"`
+	Options       []string `json:"options"`
+	CorrectIndex  int      `json:"correct_index"`
+	Explanation   string   `json:"explanation"`
+	SourceExcerpt string   `json:"source_excerpt"`
+	Difficulty    string   `json:"difficulty,omitempty"`
+	BloomTag      string   `json:"bloom_tag,omitempty"`
 }
 
 type Input struct {
-	Title   string
-	Content string
-	Count   int
+	Title           string
+	Content         string
+	Count           int
+	OptionsPerItem  int
+	Difficulty      string
+	Locale          string
+}
+
+type Result struct {
+	Items         []Question `json:"items"`
+	Model         string     `json:"model"`
+	PromptVersion string     `json:"prompt_version"`
 }
 
 type Generator interface {
 	Name() string
-	Generate(ctx context.Context, in Input) ([]Question, error)
+	Generate(ctx context.Context, in Input) (Result, error)
 }
 
 func New(openAIKey, model string) Generator {
@@ -34,21 +46,38 @@ func New(openAIKey, model string) Generator {
 	return OpenAI{APIKey: openAIKey, Model: model}
 }
 
+func ClampCount(n int) int {
+	if n <= 0 {
+		return 10
+	}
+	if n == 1 {
+		return 1
+	}
+	if n < 5 {
+		return 5
+	}
+	if n > 20 {
+		return 20
+	}
+	return n
+}
+
 type Mock struct{}
 
 func (Mock) Name() string { return "mock" }
 
-func (Mock) Generate(_ context.Context, in Input) ([]Question, error) {
-	return MockQuestions(in), nil
+func (Mock) Generate(_ context.Context, in Input) (Result, error) {
+	return Result{
+		Items:         MockQuestions(in),
+		Model:         "mock",
+		PromptVersion: "v1",
+	}, nil
 }
 
 var sentenceSplit = regexp.MustCompile(`(?m)[.!?]+\s+`)
 
 func MockQuestions(in Input) []Question {
-	count := in.Count
-	if count <= 0 {
-		count = 5
-	}
+	count := ClampCount(in.Count)
 	sentences := usableSentences(in.Content)
 	if len(sentences) == 0 {
 		sentences = []string{
@@ -56,6 +85,11 @@ func MockQuestions(in Input) []Question {
 			"Tutors should approve every generated item before publishing a tryout.",
 			"Each multiple-choice item has four options and one correct answer.",
 		}
+	}
+
+	diff := in.Difficulty
+	if diff == "" {
+		diff = "mixed"
 	}
 
 	out := make([]Question, 0, count)
@@ -78,13 +112,21 @@ func MockQuestions(in Input) []Question {
 			stem = fmt.Sprintf("Based only on the pasted notes%s, select the correct claim.", titleClause(in.Title))
 		}
 		out = append(out, Question{
-			Stem:         stem,
-			Options:      shuffled,
-			CorrectIndex: correctIndex,
-			Explanation:  "Grounded in this passage from the material: “" + clip(src, 180) + "”",
+			Stem:          stem,
+			Options:       shuffled,
+			CorrectIndex:  correctIndex,
+			Explanation:   "Grounded in this passage from the material: “" + clip(src, 180) + "”",
+			SourceExcerpt: clip(src, 220),
+			Difficulty:    diff,
+			BloomTag:      bloomFor(i),
 		})
 	}
 	return out
+}
+
+func bloomFor(i int) string {
+	tags := []string{"remember", "understand", "apply", "analyze"}
+	return tags[i%len(tags)]
 }
 
 func fallbackTitle(title string) string {

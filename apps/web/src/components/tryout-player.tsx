@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { submitAttempt } from "@/app/tryout/actions";
+import { submitAttempt } from "@/app/t/actions";
 import { letters } from "@/lib/options";
 
 export type PlayerQuestion = {
@@ -13,23 +13,24 @@ export type PlayerQuestion = {
 
 type Props = {
   attemptId: string;
-  durationMinutes: number;
+  token: string;
+  durationSeconds: number;
   startedAt: string;
   questions: PlayerQuestion[];
 };
 
-export function TryoutPlayer({ attemptId, durationMinutes, startedAt, questions }: Props) {
+export function TryoutPlayer({ attemptId, token, durationSeconds, startedAt, questions }: Props) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | null>>({});
   const [flagged, setFlagged] = useState<Record<string, boolean>>({});
-  const [remaining, setRemaining] = useState(() => remainingSeconds(startedAt, durationMinutes));
+  const [remaining, setRemaining] = useState(() => remainingSeconds(startedAt, durationSeconds));
   const [pending, startTransition] = useTransition();
 
   const current = questions[index];
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      const next = remainingSeconds(startedAt, durationMinutes);
+      const next = remainingSeconds(startedAt, durationSeconds);
       setRemaining(next);
       if (next <= 0) {
         window.clearInterval(timer);
@@ -38,11 +39,12 @@ export function TryoutPlayer({ attemptId, durationMinutes, startedAt, questions 
     }, 500);
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startedAt, durationMinutes]);
+  }, [startedAt, durationSeconds]);
 
   function submitNow() {
     const form = new FormData();
     form.set("attemptId", attemptId);
+    form.set("token", token);
     form.set("answers", JSON.stringify(answers));
     startTransition(() => {
       void submitAttempt(form);
@@ -152,7 +154,7 @@ export function TryoutPlayer({ attemptId, durationMinutes, startedAt, questions 
   );
 }
 
-function remainingSeconds(startedAt: string, durationMinutes: number) {
-  const end = new Date(startedAt).getTime() + durationMinutes * 60_000;
+function remainingSeconds(startedAt: string, durationSeconds: number) {
+  const end = new Date(startedAt).getTime() + durationSeconds * 1000;
   return Math.max(0, Math.ceil((end - Date.now()) / 1000));
 }
